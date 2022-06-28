@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <sys/syscall.h>
 
-const char *HEADER_TEXT = "// Do not manually edit this file\n\n";
-
 int main() {
   FILE *fp = fopen("out/const.s", "w");
 
