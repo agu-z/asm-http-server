@@ -1,4 +1,5 @@
 #include <netinet/in.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <sys/_types/_iovec_t.h>
 #include <sys/socket.h>
@@ -12,6 +13,7 @@ int main() {
 #define add_const(name) fprintf(fp, ".equ %s, %d\n", #name, name);
 
   add_const(SYS_exit);
+  add_const(SYS_read);
   add_const(SYS_write);
   add_const(SYS_socket);
   add_const(SYS_setsockopt);
@@ -29,13 +31,21 @@ int main() {
 
   fprintf(fp, ".equ sizeof_int, %lu\n", sizeof(int));
 
-  struct sockaddr_in _sockaddr_in;
-  fprintf(fp, ".equ sizeof_sockaddr_in, %lu\n", sizeof(_sockaddr_in));
+  fprintf(fp, ".equ sizeof_sockaddr_in, %lu\n", sizeof(struct sockaddr_in));
+  fprintf(fp, ".equ offsetof_sin_family, %lu\n",
+          offsetof(struct sockaddr_in, sin_family));
+  fprintf(fp, ".equ offsetof_sin_port, %lu\n",
+          offsetof(struct sockaddr_in, sin_port));
+  fprintf(fp, ".equ offsetof_sin_addr, %lu\n",
+          offsetof(struct sockaddr_in, sin_addr));
 
-  struct sockaddr_storage _sockaddr_storage;
-  fprintf(fp, ".equ sizeof_sockaddr_storage, %lu\n", sizeof(_sockaddr_storage));
+  const int PORT = 4520;
+  add_const(PORT);
+  fprintf(fp, ".equ htons_PORT, %d\n", htons(PORT));
 
-  fprintf(fp, ".equ PORT, %d\n", htons(4520));
+  fprintf(fp, "listening_msg:\n");
+  fprintf(fp, "    .ascii \"Listening on port %d...\\n\\n\"\n", PORT);
+  fprintf(fp, "listening_msg_len = . - listening_msg\n");
 
   fclose(fp);
 

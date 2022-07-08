@@ -5,25 +5,41 @@
 my_addr: 
     .ds sizeof_sockaddr_in
 
-their_addr: 
-    .ds sizeof_sockaddr_storage
+.equ REQ_BUFFER_SIZE, 1024
+
+request:
+    .ds REQ_BUFFER_SIZE
 
 .text
 
 .global _start
 .align 2
 
+
+// Gets the address of writable memory
+.macro dadr Xn, name
+    adrp    \Xn, \name@page
+    add     \Xn, \Xn, \name@pageoff
+.endm
+
+// Performs a syscall by name
+.macro sys name
+    mov     x16, SYS_\name
+    svc     0
+.endm
+
+
 _start:
-    adr     x0, hi
-    mov     x1, 4
-    bl      print
+    mov     x0, 1
+    adr     x1, listening_msg
+    mov     x2, listening_msg_len
+    sys     write
 
     // Get listener sock fd
     mov     x0, PF_INET
     mov     x1, SOCK_STREAM
-    mov     x2, 0
-    mov     x16, SYS_socket
-    svc     0
+    mov     x2, xzr
+    sys     socket
 
     // Save returned sockfd
     mov     x10, x0
@@ -34,8 +50,7 @@ _start:
     mov     x2, SO_REUSEADDR
     adr     x3, true
     mov     x4, sizeof_int
-    mov     x16, SYS_setsockopt
-    svc     0
+    sys     setsockopt
     
     // Allow reusing port
     mov     x0, x10
@@ -43,78 +58,69 @@ _start:
     mov     x2, SO_REUSEPORT
     adr     x3, true
     mov     x4, sizeof_int
-    mov     x16, SYS_setsockopt
-    svc     0
+    sys     setsockopt
     
     // Construct sockaddr_in struct for bind
-    adrp    x8, my_addr@page
-    add     x8, x8, my_addr@pageoff
-    mov     w9, 0           // my_addr.sin_len = 0
-    strb    w9, [x8]  
-    mov     w9, AF_INET     // my_addr.sin_family = AF_INET
-    strb    w9, [x8, 1]
-    mov     w9, PORT        // my_addr.sin_port = PORT
-    strh    w9, [x8, 2]
-    mov     w9, INADDR_ANY  // my_addr.sin_addr.s_addr = INADDR_ANY
-    strb    w9, [x8, 4]
-    mov     w9, 0           // my_addr.sin_zero = 0
-    strb    w9, [x8, 8]      
+    dadr    x1, my_addr
+    mov     w9, AF_INET
+    strb    w9, [x1, offsetof_sin_family]
+    mov     w9, htons_PORT
+    strh    w9, [x1, offsetof_sin_port]
+    mov     w9, INADDR_ANY
+    strb    w9, [x1, offsetof_sin_addr]
 
     // Bind port
     mov     x0, x10
-    mov     x1, x8
     mov     x2, sizeof_sockaddr_in 
-    mov     x16, SYS_bind
-    svc     0
+    sys     bind
     
     // Listen
     mov     x0, x10
     mov     x1, 10
-    mov     x16, SYS_listen
-    svc     0
+    sys     listen
 
     // Accept
-    adrp    x11, their_addr@page
-    add     x11, x11, their_addr@pageoff
     mov     x0, x10
-    mov     x1, x11
-    adr     x2, sizeof_sockaddr_storage_p
-    mov     x16, SYS_accept
-    svc     0
+    mov     x1, xzr
+    mov     x2, xzr
+    sys     accept
 
-    // Store sockfd for this specific connection
-    mov     x12, x0
+    // Store file descriptor for this specific connection
+    mov     x11, x0
 
-    // TODO: Handle request
+    // Read request
+    dadr    x1, request
+    mov     x2, REQ_BUFFER_SIZE
+    sys     read
+
+    // Print request to stdout
+    mov     x0, 1
+    dadr    x1, request
+    mov     x2, REQ_BUFFER_SIZE
+    sys     write
+
+    // Write response
+    mov     x0, x11
+    adr     x1, http_response
+    mov     x2, http_response_len
+    sys     write
 
     // Close connection fd
-    mov     x0, x12
-    mov     x16, SYS_close
-    svc     0
-    
+    mov     x0, x11
+    sys     close
+ 
     // Close listening fd
     mov     x0, x10
-    mov     x16, SYS_close
-    svc     0
+    sys     close
 
-    // Exit 
-    mov     x0, 0
-    mov     x16, SYS_exit
-    svc     0
-
-print:
-    mov     x2, x1
-    mov     x1, x0
-    mov     x0, 1
-    mov     x16, SYS_write
-    svc     0
-    ret
-
-hi:
-    .ascii  "Hi!\n"
+    // Exit with code 0
+    mov     x0, xzr
+    sys     exit
 
 true:
     .word   1
 
-sizeof_sockaddr_storage_p:
-    .word   sizeof_sockaddr_storage
+http_response:
+    .ascii "HTTP/1.1 200 OK\nContent-Type: text/html\n\r\n<h1>Hello from Apple Silicon!</h1>\n"
+
+http_response_len = . - http_response
