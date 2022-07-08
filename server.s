@@ -30,11 +30,6 @@ request:
 
 
 _start:
-    mov     x0, 1
-    adr     x1, listening_msg
-    mov     x2, listening_msg_len
-    sys     write
-
     // Get listener sock fd
     mov     x0, PF_INET
     mov     x1, SOCK_STREAM
@@ -79,16 +74,24 @@ _start:
     mov     x1, 10
     sys     listen
 
+    // Print listening message
+    mov     x0, 1
+    adr     x1, listening_msg
+    mov     x2, listening_msg_len
+    sys     write
+
+accept_connection:
     // Accept
     mov     x0, x10
     mov     x1, xzr
     mov     x2, xzr
     sys     accept
 
-    // Store file descriptor for this specific connection
+    // Store fd for this specific connection
     mov     x11, x0
-
+ 
     // Read request
+    mov     x0, x11
     dadr    x1, request
     mov     x2, REQ_BUFFER_SIZE
     sys     read
@@ -108,14 +111,9 @@ _start:
     // Close connection fd
     mov     x0, x11
     sys     close
- 
-    // Close listening fd
-    mov     x0, x10
-    sys     close
 
-    // Exit with code 0
-    mov     x0, xzr
-    sys     exit
+    // Accept another connection
+    b accept_connection
 
 true:
     .word   1
@@ -124,3 +122,4 @@ http_response:
     .ascii "HTTP/1.1 200 OK\nContent-Type: text/html\n\r\n<h1>Hello from Apple Silicon!</h1>\n"
 
 http_response_len = . - http_response
+
