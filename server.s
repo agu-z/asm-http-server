@@ -12,8 +12,8 @@ request:
 
 .text
 
-.global _start
 .align 2
+.global _start
 
 
 // Gets the address of writable memory
@@ -91,21 +91,35 @@ accept_connection:
     mov     x11, x0
  
     // Read request
+    dadr    x12, request
     mov     x0, x11
-    dadr    x1, request
+    mov     x1, x12
     mov     x2, REQ_BUFFER_SIZE
     sys     read
 
     // Print request to stdout
     mov     x0, 1
-    dadr    x1, request
+    mov     x1, x12
     mov     x2, REQ_BUFFER_SIZE
     sys     write
 
-    // Write response
-    mov     x0, x11
+    ldr     x13, [x12]
+    adr     x14, get_prefix
+    ldr     x14, [x14]
+    and     x13, x13, x14
+    cmp     x13, x14
+    b.ne    method_not_allowed
+
     adr     x1, http_response
     mov     x2, http_response_len
+    b       write_and_close
+
+method_not_allowed:
+    adr     x1, only_get_supported
+    mov     x2, only_get_supported_len
+
+write_and_close:
+    mov     x0, x11
     sys     write
 
     // Close connection fd
@@ -122,4 +136,18 @@ http_response:
     .ascii "HTTP/1.1 200 OK\nContent-Type: text/html\n\r\n<h1>Hello from Apple Silicon!</h1>\n"
 
 http_response_len = . - http_response
+
+.align 4
+
+get_prefix:
+    .ascii "GET /"
+
+get_prefix_len = . - get_prefix
+
+.align 4
+
+only_get_supported:
+    .ascii "HTTP/1.1 405 Method Not Allowed\n\r\nOnly GET method supported\n"
+
+only_get_supported_len = . - only_get_supported
 
