@@ -103,20 +103,21 @@ accept_connection:
     mov     x2, REQ_BUFFER_SIZE
     sys     write
 
-    ldr     x13, [x12]
-    adr     x14, get_prefix
-    ldr     x14, [x14]
-    and     x13, x13, x14
-    cmp     x13, x14
-    b.ne    method_not_allowed
+    ldr     x12, [x12]
+    adr     x13, index_route
+    ldr     x13, [x13]
+    and     x12, x12, 0xFFFFFFFFFFFF
+    cmp     x12, x13
+    b.eq    respond_index
 
-    adr     x1, http_response
-    mov     x2, http_response_len
+    adr     x1, not_found_response
+    mov     x2, not_found_response_len
     b       write_and_close
 
-method_not_allowed:
-    adr     x1, only_get_supported
-    mov     x2, only_get_supported_len
+respond_index:
+    adr     x1, index_response
+    mov     x2, index_response_len
+    b       write_and_close
 
 write_and_close:
     mov     x0, x11
@@ -132,22 +133,22 @@ write_and_close:
 true:
     .word   1
 
-http_response:
+
+.align 4
+
+index_route:
+    .ascii "GET / "
+
+index_route_len = . - index_route
+
+.align 4
+
+not_found_response:
+    .ascii "HTTP/1.1 404 Not Found\n\r\nNot Found\n"
+
+not_found_response_len = . - not_found_response
+
+index_response:
     .ascii "HTTP/1.1 200 OK\nContent-Type: text/html\n\r\n<h1>Hello from Apple Silicon!</h1>\n"
 
-http_response_len = . - http_response
-
-.align 4
-
-get_prefix:
-    .ascii "GET /"
-
-get_prefix_len = . - get_prefix
-
-.align 4
-
-only_get_supported:
-    .ascii "HTTP/1.1 405 Method Not Allowed\n\r\nOnly GET method supported\n"
-
-only_get_supported_len = . - only_get_supported
-
+index_response_len = . - index_response
