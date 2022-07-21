@@ -2,8 +2,10 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/_types/_iovec_t.h>
+#include <sys/_types/_timeval.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
 
 int main() {
   FILE *fp = fopen("out/const.s", "w");
@@ -21,6 +23,7 @@ int main() {
   add_const(SYS_listen);
   add_const(SYS_accept);
   add_const(SYS_close);
+  add_const(SYS_gettimeofday);
   add_const(AF_INET);
   add_const(PF_INET);
   add_const(SOCK_STREAM);
@@ -46,6 +49,9 @@ int main() {
   fprintf(fp, "listening_msg:\n");
   fprintf(fp, "    .ascii \"Listening on port %d...\\n\\n\"\n", PORT);
   fprintf(fp, "listening_msg_len = . - listening_msg\n");
+
+  fprintf(fp, ".equ sizeof_timeval, %lu\n", sizeof(struct timeval));
+  fprintf(fp, ".equ sizeof_timezone, %lu\n", sizeof(struct timezone));
 
   fclose(fp);
 
