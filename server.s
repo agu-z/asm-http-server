@@ -215,7 +215,7 @@ handle_time:
     mov     x6, 10
 
     digit_to_ascii:
-        // Extract last digit
+        // Extract last digit by dividing by 10 (x6)
         mov     x3, x0
         udiv    x0, x0, x6
         msub    x5, x0, x6, x3
