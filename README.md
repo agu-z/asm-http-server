@@ -14,6 +14,7 @@ To prevent hardcoding all the constants needed to talk to the OS, [I'm generatin
 
 - Use `fork` to handle many connections at once
 - Handle `SIGINT` to gracefully close the server
+- Send `Content-Length`
 
 # Running
 
