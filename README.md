@@ -1,12 +1,24 @@
 # asm-http-server
-I'm gonna attempt to write a simple HTTP server in ARM64 assembly to practice some low level stuff
+
+I wrote an HTTP server in ARM64 Assembly to have fun with some low level stuff.
+
+![A gif recording demonstrating the server working](.demo.gif)
+
+You can check out the code at [`server.s`](server.s).
+
+I'm talking to macOS directly through direct syscalls, which you're not supposed to do since, being a private API, they can change at any point. However, I did so anyway since I just wanted to explore the lowest level.
+
+To prevent hardcoding all the constants needed to talk to the OS, [I'm generating](make_const.c) an `const.s` file from the C headers of the system lib. I cannot distribute binaries, but at least I should have better luck building it in the future.
 
 # Running
-On an Apple Silicon device, run:
+
+On an Apple Silicon mac, run:
 
 ```sh
 $ make
 ```
+
+and check out [http://localhost:4520](http://localhost:4520).
 
 # Resources
 
@@ -16,4 +28,3 @@ $ make
 - [Beej's Guide to Network Programming (for C)](https://beej.us/guide/bgnet/html/index.html)
 - [LLDB cheat sheet](https://www.nesono.com/sites/default/files/lldb%20cheat%20sheet.pdf)
 - [HTTP flow](https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview#http_flow)
-
