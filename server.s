@@ -22,7 +22,7 @@ stat_buf: .ds sizeof_stat
 .global _start
 
 
-// Gets the address of writable memory
+// Gets the address of (writable) memory in the data section
 .macro dadr Xn, name
     adrp    \Xn, \name@page
     add     \Xn, \Xn, \name@pageoff
@@ -136,27 +136,9 @@ accept_connection:
     bl      write_response
     b       end_response
 
-    write_response:
-        mov     x0, x11
-        sys     write
-        ret
 
-    end_response:
-        mov     x0, x11
-        adr     x1, newline
-        mov     x2, 1
-        sys     write
-
-        // Close connection fd
-        mov     x0, x11
-        sys     close
-
-        // Accept another connection
-        b accept_connection
-
-
-    match_route:
-        mov     x14, 0
+match_route:
+    mov     x14, 0
 
     match_route_char:
         // Load the next request char and expected route char
@@ -186,6 +168,25 @@ accept_connection:
 
     route_not_matched:
         ret
+
+
+write_response:
+    mov     x0, x11
+    sys     write
+    ret
+
+end_response:
+    mov     x0, x11
+    adr     x1, newline
+    mov     x2, 1
+    sys     write
+
+    // Close connection fd
+    mov     x0, x11
+    sys     close
+
+    // Accept another connection
+    b accept_connection
 
 
 // Route handlers
@@ -276,9 +277,9 @@ handle_cat_gif:
     b       end_response
 
 
-true: .word   1
+true: .word 1
 
-zero_offset: .byte   0
+zero_offset: .byte 0
 
 .align 4
 newline: .ascii "\n"
@@ -303,7 +304,7 @@ not_found_response_len = . - not_found_response
 
 .align 4
 ok_html_response:
-    .ascii "http/1.1 200 OK\nContent-Type: text/html\n\r\n"
+    .ascii "HTTP/1.1 200 OK\nContent-Type: text/html\n\r\n"
 
 ok_html_response_len = . - ok_html_response
 

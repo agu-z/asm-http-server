@@ -37,15 +37,22 @@ int main() {
   add_const(SO_REUSEPORT);
   add_const(O_RDONLY);
 
-  fprintf(fp, ".equ sizeof_int, %lu\n", sizeof(int));
+#define add_s_size(name)                                                       \
+  fprintf(fp, ".equ sizeof_%s, %lu\n", #name, sizeof(struct name));
+#define add_offset(struct_name, member)                                        \
+  fprintf(fp, ".equ offsetof_%s, %lu\n", #member,                              \
+          offsetof(struct struct_name, member));
 
-  fprintf(fp, ".equ sizeof_sockaddr_in, %lu\n", sizeof(struct sockaddr_in));
-  fprintf(fp, ".equ offsetof_sin_family, %lu\n",
-          offsetof(struct sockaddr_in, sin_family));
-  fprintf(fp, ".equ offsetof_sin_port, %lu\n",
-          offsetof(struct sockaddr_in, sin_port));
-  fprintf(fp, ".equ offsetof_sin_addr, %lu\n",
-          offsetof(struct sockaddr_in, sin_addr));
+  add_s_size(sockaddr_in);
+  add_offset(sockaddr_in, sin_family);
+  add_offset(sockaddr_in, sin_port);
+  add_offset(sockaddr_in, sin_addr);
+  add_s_size(timeval);
+  add_s_size(timezone);
+  add_s_size(stat);
+  add_offset(stat, st_size);
+
+  fprintf(fp, ".equ sizeof_int, %lu\n", sizeof(int));
 
   const int PORT = 4520;
   add_const(PORT);
@@ -54,12 +61,6 @@ int main() {
   fprintf(fp, "listening_msg:\n");
   fprintf(fp, "    .ascii \"Check out http://localhost:%d\\n\\n\"\n", PORT);
   fprintf(fp, "listening_msg_len = . - listening_msg\n");
-
-  fprintf(fp, ".equ sizeof_timeval, %lu\n", sizeof(struct timeval));
-  fprintf(fp, ".equ sizeof_timezone, %lu\n", sizeof(struct timezone));
-
-  fprintf(fp, ".equ sizeof_stat, %lu\n", sizeof(struct stat));
-  fprintf(fp, ".equ offsetof_st_size, %lu\n", offsetof(struct stat, st_size));
 
   fclose(fp);
 

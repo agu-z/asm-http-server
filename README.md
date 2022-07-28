@@ -1,6 +1,6 @@
 # asm-http-server
 
-I wrote an HTTP server in ARM64 Assembly to have fun with some low level stuff.
+I wrote an HTTP server in ARM64 Assembly to have fun with some low-level stuff.
 
 ![A gif recording demonstrating the server working](.demo.gif)
 
