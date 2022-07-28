@@ -218,10 +218,10 @@ handle_time:
     mov     x6, 10
 
     digit_to_ascii:
-        // Extract last digit by dividing by 10 (x6)
+        // Extract the last digit
         mov     x3, x0
-        udiv    x0, x0, x6
-        msub    x5, x0, x6, x3
+        udiv    x0, x0, x6     // x0 = x0 / 10
+        msub    x5, x0, x6, x3 // x5 = x3 - x0 * 10 (remainder)
 
         // Get the ascii code by adding 0x30
         add     x5, x5, 0x30
