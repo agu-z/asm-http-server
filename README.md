@@ -6,7 +6,7 @@ I wrote an HTTP server in ARM64 Assembly to have fun with some low level stuff.
 
 You can check out the code at [`server.s`](server.s).
 
-I'm talking to macOS directly through direct syscalls, which you're not supposed to do since, being a private API, they can change at any point. However, I did so anyway since I just wanted to explore the lowest level.
+I'm talking to macOS directly through syscalls, which you're not supposed to do since, being a private API, they can change at any point. However, I did so anyway since I just wanted to explore the lowest level.
 
 To prevent hardcoding all the constants needed to talk to the OS, [I'm generating](make_const.c) a `const.s` file from the C headers of the system lib. I cannot distribute binaries, but at least I should have better luck building it in the future.
 
