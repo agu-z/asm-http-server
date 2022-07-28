@@ -165,15 +165,18 @@ accept_connection:
         cmp     w16, wzr            // check for NUL terminator
         b.eq    end_of_route
 
-        // TODO: Request boundaries check
-
         // Compare request and route chars
         cmp     w15, w16
         b.ne    route_not_matched
 
-        // Char matched but there's more chars, keep looping
+        // Char matched
         add     x14, x14, 1
-        b       match_route_char
+
+        // Keep looping if we haven't reached the end of the buffer
+        cmp     x14, req_buf_size
+        b.lt    match_route_char
+
+        b       route_not_matched
 
     end_of_route:
         cmp     w15, ' '
@@ -228,6 +231,7 @@ handle_time:
         cmp     x0, 1
         b.lt    write_time_response
 
+        // Move pointer to the left
         sub     x4, x4, 1
 
         b       digit_to_ascii
